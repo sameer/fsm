@@ -47,12 +47,13 @@ func (mm *MooreMachine) Run(ticker *time.Ticker) error {
 		if err = mm.Verify(); err != nil { // Verify that variable types are correct.
 			return err
 		}
-		mm.outputFunction(mm.currentState) // Do output for current state.
 		if reflect.DeepEqual(mm.currentState, mm.quitState) { // Quit if this is the quit state.
 			return nil // No error encountered.
 		}
 
 		mm.currentState, err = mm.transitionFunction(mm.currentState, mm.inputFunction()) // Do a state transition.
+
+		mm.outputFunction(mm.currentState) // Do output for current state.
 		if err != nil { // Send error and quit.
 			return err
 		}
