@@ -58,17 +58,19 @@ func (mm *MooreMachine) Fork(ticker *time.Ticker) chan error {
 
 func (mm *MooreMachine) Verify() error {
 	stateType := reflect.TypeOf(mm.currentState)
-	if !stateType.AssignableTo(reflect.TypeOf(mm.quitState)) {
-		return errors.New("type of current state differs from that of quit state")
-	}
-	if !stateType.AssignableTo(reflect.TypeOf(mm.transitionFunction).In(0)) {
-		return errors.New("type of current state differs from that of transition function argument")
-	}
-	if !stateType.AssignableTo(reflect.TypeOf(mm.transitionFunction).Out(0)) {
-		return errors.New("type of current state differs from that of transition function return")
-	}
-	if !stateType.AssignableTo(reflect.TypeOf(mm.outputFunction).In(0)) {
-		return errors.New("type of current state differs from that of output function argument")
+	if stateType != nil {
+		if mm.quitState != nil && !stateType.AssignableTo(reflect.TypeOf(mm.quitState)) {
+			return errors.New("type of current state differs from that of quit state")
+		}
+		if !stateType.AssignableTo(reflect.TypeOf(mm.transitionFunction).In(0)) {
+			return errors.New("type of current state differs from that of transition function argument")
+		}
+		if !stateType.AssignableTo(reflect.TypeOf(mm.transitionFunction).Out(0)) {
+			return errors.New("type of current state differs from that of transition function return")
+		}
+		if !stateType.AssignableTo(reflect.TypeOf(mm.outputFunction).In(0)) {
+			return errors.New("type of current state differs from that of output function argument")
+		}
 	}
 
 	inputType := reflect.TypeOf(mm.inputFunction).Out(0)
