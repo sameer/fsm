@@ -57,6 +57,7 @@ func (mm *MooreMachine) Run(ticker *time.Ticker) error {
 			return err
 		}
 	}
+	return nil
 }
 
 func (mm *MooreMachine) Verify() error {
