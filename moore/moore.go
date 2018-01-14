@@ -19,7 +19,6 @@ type MooreMachine struct {
 	transitionFunction TransitionFunction
 	inputFunction      InputFunction
 	outputFunction     OutputFunction
-	quit               bool
 }
 
 func Make(startState State, quitState State, transitionFunction TransitionFunction, inputFunction InputFunction, outputFunction OutputFunction) MooreMachine {
