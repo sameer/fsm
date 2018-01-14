@@ -3,6 +3,7 @@ package moore
 import (
 	"time"
 	"reflect"
+	"errors"
 )
 
 type State interface{}
@@ -32,43 +33,48 @@ func Make(startState State, quitState State, transitionFunction TransitionFuncti
 }
 
 func (mm *MooreMachine) Fork(ticker *time.Ticker) chan error {
-	mm.Verify()
-	errchan := make(chan error)
+	errorChannel := make(chan error) // Use a channel to pass any error back to user and allow them to wait until quit state is reached.
 	go func() {
-		for range ticker.C {
-			mm.outputFunction(mm.currentState)
-			if mm.currentState == mm.quitState {
+		for range ticker.C { // Loop based on a timer.
+			var err error
+			if err = mm.Verify(); err != nil { // Verify that variable types are correct.
+				errorChannel <- err
 				break
 			}
-			var err error
-			mm.currentState, err = mm.transitionFunction(mm.currentState, mm.inputFunction())
-			if err != nil {
-				errchan <- err
-				return
+			mm.outputFunction(mm.currentState) // Do output for current state.
+			if reflect.DeepEqual(mm.currentState, mm.quitState) { // Quit if this is the quit state.
+				errorChannel <- nil // No error encountered.
+				break
+			}
+
+			mm.currentState, err = mm.transitionFunction(mm.currentState, mm.inputFunction()) // Do a state transition.
+			if err != nil { // Send error and quit.
+				errorChannel <- err
+				break
 			}
 		}
-		errchan <- nil
 	}()
-	return errchan
+	return errorChannel
 }
 
-func (mm *MooreMachine) Verify() {
+func (mm *MooreMachine) Verify() error {
 	stateType := reflect.TypeOf(mm.currentState)
 	if !stateType.AssignableTo(reflect.TypeOf(mm.quitState)) {
-		panic("Type of current state differs from that of quit state.")
+		return errors.New("type of current state differs from that of quit state")
 	}
 	if !stateType.AssignableTo(reflect.TypeOf(mm.transitionFunction).In(0)) {
-		panic("Type of current state differs from that of transition function argument.")
+		return errors.New("type of current state differs from that of transition function argument")
 	}
 	if !stateType.AssignableTo(reflect.TypeOf(mm.transitionFunction).Out(0)) {
-		panic("Type of current state differs from that of transition function return.")
+		return errors.New("type of current state differs from that of transition function return")
 	}
 	if !stateType.AssignableTo(reflect.TypeOf(mm.outputFunction).In(0)) {
-		panic("Type of current state differs from that of output function argument.")
+		return errors.New("type of current state differs from that of output function argument")
 	}
 
 	inputType := reflect.TypeOf(mm.inputFunction).Out(0)
 	if !inputType.AssignableTo(reflect.TypeOf(mm.transitionFunction).In(1)) {
-		panic("Type of input function return differs from that of transition function argument.")
+		return errors.New("type of input function return differs from that of transition function argument")
 	}
+	return nil
 }

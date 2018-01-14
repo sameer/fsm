@@ -19,7 +19,7 @@ func TestLoop(t *testing.T) {
 			}
 		},
 	)
-	if err := <- mm.Fork(time.NewTicker(time.Duration(time.Microsecond))); err != nil {
+	if err := <- mm.Fork(time.NewTicker(time.Duration(time.Nanosecond))); err != nil {
 		t.Error("Error in looping")
 	}
 	if !success {
@@ -40,7 +40,8 @@ func TestError(t *testing.T) {
 		func() Input { return 1 },
 		func(s State) {},
 	)
-	if err := <- mm.Fork(time.NewTicker(time.Duration(time.Microsecond))); err == nil {
+	if err := <- mm.Fork(time.NewTicker(time.Duration(time.Nanosecond))); err == nil {
 		t.Error("Expected error in looping")
 	}
 }
+
