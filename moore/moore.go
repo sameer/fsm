@@ -35,27 +35,28 @@ func Make(startState State, quitState State, transitionFunction TransitionFuncti
 func (mm *MooreMachine) Fork(ticker *time.Ticker) chan error {
 	errorChannel := make(chan error) // Use a channel to pass any error back to user and allow them to wait until quit state is reached.
 	go func() {
-	    runtime.LockOSThread()
-		for range ticker.C { // Loop based on a timer.
-			var err error
-			if err = mm.Verify(); err != nil { // Verify that variable types are correct.
-				errorChannel <- err
-				break
-			}
-			mm.outputFunction(mm.currentState) // Do output for current state.
-			if reflect.DeepEqual(mm.currentState, mm.quitState) { // Quit if this is the quit state.
-				errorChannel <- nil // No error encountered.
-				break
-			}
-
-			mm.currentState, err = mm.transitionFunction(mm.currentState, mm.inputFunction()) // Do a state transition.
-			if err != nil { // Send error and quit.
-				errorChannel <- err
-				break
-			}
-		}
+		runtime.LockOSThread()
+		errorChannel <- mm.Run(ticker)
 	}()
 	return errorChannel
+}
+
+func (mm *MooreMachine) Run(ticker *time.Ticker) error {
+	for range ticker.C { // Loop based on a timer.
+		var err error
+		if err = mm.Verify(); err != nil { // Verify that variable types are correct.
+			return err
+		}
+		mm.outputFunction(mm.currentState) // Do output for current state.
+		if reflect.DeepEqual(mm.currentState, mm.quitState) { // Quit if this is the quit state.
+			return nil // No error encountered.
+		}
+
+		mm.currentState, err = mm.transitionFunction(mm.currentState, mm.inputFunction()) // Do a state transition.
+		if err != nil { // Send error and quit.
+			return err
+		}
+	}
 }
 
 func (mm *MooreMachine) Verify() error {
