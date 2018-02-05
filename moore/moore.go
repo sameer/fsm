@@ -53,7 +53,9 @@ func (mm *MooreMachine) Run(ticker *time.Ticker) error {
 
 		mm.currentState, err = mm.transitionFunction(mm.currentState, mm.inputFunction()) // Do a state transition.
 
-		mm.outputFunction(mm.currentState) // Do output for current state.
+		if mm.currentState != nil {
+			mm.outputFunction(mm.currentState) // Do output for current state.
+		}
 		if err != nil {                    // Send error and quit.
 			return err
 		}
